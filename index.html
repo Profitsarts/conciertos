@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Conciertos · Asturias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#101243;          /* deep ultramarine background */
+    --ink-2:#181b58;        /* raised surface */
+    --ink-3:#22266e;        /* borders / hover */
+    --paper:#F5EFDC;        /* warm paper foreground */
+    --paper-dim:#a9aed9;    /* secondary text */
+    --yellow:#FFCC33;       /* poster yellow: gratis + accents */
+    --coral:#FF5D5D;        /* today marker */
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Archivo',system-ui,sans-serif;
+    font-size:15px;
+    line-height:1.45;
+    min-height:100vh;
+  }
+  /* ---------- top bar ---------- */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(var(--ink) 82%, rgba(16,18,67,0));
+    padding:calc(env(safe-area-inset-top) + 14px) 16px 12px;
+  }
+  .masthead{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  h1{
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(22px,6vw,30px);
+    letter-spacing:-.01em;
+    text-transform:uppercase;
+    line-height:1;
+  }
+  h1 span{color:var(--yellow)}
+  .status{
+    font-size:11px;color:var(--paper-dim);
+    display:flex;align-items:center;gap:6px;white-space:nowrap;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--paper-dim);flex:none}
+  .dot.live{background:#5ad17a}
+  .dot.offline{background:var(--coral)}
+  button.refresh{
+    background:none;border:1px solid var(--ink-3);color:var(--paper-dim);
+    border-radius:6px;padding:3px 8px;font:inherit;font-size:11px;cursor:pointer;
+  }
+  button.refresh:active{color:var(--paper)}
+  /* ---------- filters ---------- */
+  .filters{display:flex;gap:8px;margin-top:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .filters::-webkit-scrollbar{display:none}
+  .chip{
+    flex:none;background:var(--ink-2);border:1px solid var(--ink-3);color:var(--paper-dim);
+    border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{background:var(--paper);border-color:var(--paper);color:var(--ink)}
+  .chip.free[aria-pressed="true"]{background:var(--yellow);border-color:var(--yellow)}
+  .row2{display:flex;gap:8px;margin-top:8px}
+  select,input[type="search"]{
+    background:var(--ink-2);border:1px solid var(--ink-3);color:var(--paper);
+    border-radius:8px;padding:8px 10px;font:inherit;font-size:13px;min-width:0;
+  }
+  select{flex:none}
+  input[type="search"]{flex:1}
+  input::placeholder{color:var(--paper-dim)}
+  select:focus,input:focus,button:focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+  /* ---------- list ---------- */
+  main{padding:4px 16px calc(env(safe-area-inset-bottom) + 48px);max-width:720px;margin:0 auto}
+  .month-h{
+    font-family:'Archivo Black',sans-serif;text-transform:uppercase;
+    font-size:13px;letter-spacing:.24em;color:var(--paper-dim);
+    margin:26px 0 10px;display:flex;align-items:center;gap:12px;
+  }
+  .month-h::after{content:"";flex:1;height:1px;background:var(--ink-3)}
+  .day{display:flex;gap:12px;margin-bottom:14px}
+  /* signature: ticket-stub day rail */
+  .stub{
+    flex:none;width:54px;text-align:center;align-self:stretch;
+    background:var(--ink-2);border-radius:var(--radius);
+    border-right:2px dotted var(--ink);
+    padding:8px 0 6px;
+    display:flex;flex-direction:column;justify-content:flex-start;gap:0;
+  }
+  .stub .dow{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--paper-dim);text-transform:uppercase}
+  .stub .num{font-family:'Archivo Black',sans-serif;font-size:24px;line-height:1.1}
+  .day.today .stub{background:var(--coral);border-right-color:var(--ink)}
+  .day.today .stub .dow,.day.today .stub .num{color:var(--ink)}
+  .day.today .stub .dow::after{content:" · hoy"}
+  .events{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .ev{
+    background:var(--ink-2);border:1px solid transparent;border-radius:var(--radius);
+    padding:10px 12px;
+  }
+  .ev .name{font-weight:700;font-size:15px}
+  .ev .meta{color:var(--paper-dim);font-size:13px;margin-top:2px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+  .venue{text-transform:capitalize}
+  .price{font-weight:600;color:var(--paper)}
+  .tag-free{
+    display:inline-block;background:var(--yellow);color:var(--ink);
+    font-size:10px;font-weight:800;letter-spacing:.08em;border-radius:4px;
+    padding:1px 6px;text-transform:uppercase;vertical-align:1px;
+  }
+  .cycle{color:var(--paper-dim);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .empty{
+    text-align:center;color:var(--paper-dim);padding:56px 20px;font-size:14px;
+  }
+  .empty strong{color:var(--paper);display:block;font-size:16px;margin-bottom:6px}
+  .fade{animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.fade{animation:none}}
+  @media(min-width:600px){body{font-size:16px}.ev .name{font-size:16px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="masthead">
+    <h1>Conciertos <span>Asturias</span></h1>
+    <div class="status">
+      <span class="dot" id="dot"></span>
+      <span id="statusTxt">Cargando…</span>
+      <button class="refresh" id="btnRefresh" type="button">↻ Actualizar</button>
+    </div>
+  </div>
+  <div class="filters" role="group" aria-label="Vista">
+    <button class="chip" data-view="hoy" aria-pressed="false" type="button">Hoy</button>
+    <button class="chip" data-view="finde" aria-pressed="false" type="button">Finde</button>
+    <button class="chip" data-view="proximos" aria-pressed="true" type="button">Próximos</button>
+    <button class="chip" data-view="todo" aria-pressed="false" type="button">Todo</button>
+    <button class="chip free" id="btnFree" aria-pressed="false" type="button">Solo gratis</button>
+  </div>
+  <div class="row2">
+    <select id="selVenue" aria-label="Filtrar por sala"><option value="">Todas las salas</option></select>
+    <input type="search" id="inpSearch" placeholder="Buscar grupo, sala, festival…" aria-label="Buscar">
+  </div>
+</header>
+<main id="list" class="fade"></main>
+
+<script>
+/* ================= CONFIG ================= */
+const DOC_URL = "https://docs.google.com/document/u/0/d/1EAe-TBDskDMQcGsqYwkKPSd0_q780HxA1zDJBkoz65c/mobilebasic";
+const PROXIES = [
+  u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+  u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
+];
+const REFRESH_MS = 30 * 60 * 1000; // 30 min
+
+const MONTHS = {ENERO:0,FEBRERO:1,MARZO:2,ABRIL:3,MAYO:4,JUNIO:5,JULIO:6,AGOSTO:7,SEPTIEMBRE:8,OCTUBRE:9,NOVIEMBRE:10,DICIEMBRE:11};
+const MONTH_NAMES = Object.keys(MONTHS);
+const DOW = {L:"lun",M:"mar",X:"mié",J:"jue",V:"vie",S:"sáb",D:"dom"};
+
+/* ================= PARSER ================= */
+function parseDoc(text){
+  const events = [];
+  const now = new Date();
+  let month = null;
+  for (let raw of text.split(/\n+/)){
+    const line = raw.trim();
+    if (!line) continue;
+    const up = line.toUpperCase();
+    if (MONTHS.hasOwnProperty(up)) { month = MONTHS[up]; continue; }
+    const m = line.match(/^([LMXJVSD])(\d{1,2})\s+(.+)$/);
+    if (!m || month === null) continue;
+    const day = parseInt(m[2],10);
+    let rest = m[3].trim();
+
+    // venue: last (...) group that appears BEFORE any € sign (else last one)
+    let venue = null;
+    const euroIdx = rest.indexOf("€");
+    const parens = [...rest.matchAll(/\(([^()]*)\)/g)];
+    const candidates = euroIdx >= 0 ? parens.filter(p => p.index < euroIdx) : parens;
+    if (candidates.length){
+      const p = candidates[candidates.length-1];
+      venue = p[1].trim();
+      rest = (rest.slice(0, p.index) + rest.slice(p.index + p[0].length)).trim();
+    }
+    // time: first hh:mm anywhere
+    let time = null;
+    const t = rest.match(/(\d{1,2}:\d{2})/);
+    if (t){ time = t[1]; rest = (rest.slice(0, t.index) + rest.slice(t.index + t[0].length)).trim(); }
+    // price
+    let price = null;
+    if (/\bGRATIS\b/i.test(rest)){
+      price = "GRATIS";
+      rest = rest.replace(/\/?\s*\bGRATIS\b/i,"").trim();
+    } else {
+      const eu = rest.search(/(?:\d[\d.,]*(?:\s*(?:a|\/|-)\s*\d[\d.,]*)?\s*€)/);
+      if (eu >= 0){
+        // price starts at the last separator before the € amount (captures "entrada de dia 8€")
+        const before = rest.slice(0, eu);
+        const sep = Math.max(before.lastIndexOf(" / "), before.lastIndexOf(" - "), before.lastIndexOf(" – "));
+        const start = sep >= 0 ? sep + 3 : eu;
+        price = rest.slice(start).trim();
+        rest = rest.slice(0, sep >= 0 ? sep : eu).trim();
+      }
+    }
+    // clean stray separators left in the name
+    rest = rest.replace(/[\/\-–·,]+$/,"").replace(/^[\/\-–·,]+/,"").replace(/\s{2,}/g," ").trim();
+    // cycle/festival prefix: "Festival x: artist"
+    let cycle = null;
+    const c = rest.match(/^([^:]{3,40}):\s*(.+)$/);
+    if (c && !/^\d/.test(c[2])){ cycle = c[1].trim(); rest = c[2].trim(); }
+
+    // year inference: doc runs forward from "now"; months far behind belong to next year
+    let year = now.getFullYear();
+    if (month < now.getMonth() - 6) year += 1;
+
+    const date = new Date(year, month, day);
+    events.push({
+      date, month, day,
+      dow: m[1],
+      name: rest,
+      venue, time, price, cycle,
+      free: !!(price && /gratis/i.test(price)),
+      raw: line
+    });
+  }
+  events.sort((a,b)=>a.date-b.date || (a.time||"99").localeCompare(b.time||"99"));
+  return events;
+}
+
+/* ============ FETCH (live doc) ============ */
+function htmlToText(html){
+  const cleaned = html
+    .replace(/<style[\s\S]*?<\/style>/gi,"")
+    .replace(/<script[\s\S]*?<\/script>/gi,"")
+    .replace(/<\/(p|div|h\d|li|tr)>/gi,"\n")
+    .replace(/<br[^>]*>/gi,"\n")
+    .replace(/<[^>]+>/g,"");
+  const ta = document.createElement("textarea");
+  ta.innerHTML = cleaned;
+  return ta.value;
+}
+
+async function fetchDoc(){
+  for (const proxy of PROXIES){
+    try{
+      const res = await fetch(proxy(DOC_URL), {cache:"no-store"});
+      if (!res.ok) continue;
+      const html = await res.text();
+      const text = htmlToText(html);
+      const evs = parseDoc(text);
+      if (evs.length > 5) return evs; // sanity check
+    }catch(e){ /* try next proxy */ }
+  }
+  return null;
+}
+
+/* ================= STATE ================= */
+let allEvents = [];
+let view = "proximos";
+let freeOnly = false;
+let venueFilter = "";
+let query = "";
+let live = false;
+let lastUpdate = null;
+
+/* ================= RENDER ================= */
+const $ = s => document.querySelector(s);
+const list = $("#list");
+
+function startOfDay(d){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+
+function weekendRange(today){
+  // Fri–Sun containing/next from today
+  const d = startOfDay(today);
+  const dow = d.getDay(); // 0=Sun
+  let fri = new Date(d);
+  if (dow === 0) fri.setDate(d.getDate()-2);
+  else fri.setDate(d.getDate() + (5 - dow));
+  const sun = new Date(fri); sun.setDate(fri.getDate()+2);
+  return [fri, sun];
+}
+
+function filtered(){
+  const today = startOfDay(new Date());
+  let evs = allEvents;
+  if (view === "hoy") evs = evs.filter(e => startOfDay(e.date).getTime() === today.getTime());
+  else if (view === "finde"){
+    const [f,s] = weekendRange(today);
+    evs = evs.filter(e => e.date >= f && e.date <= new Date(s.getTime()+86399999) && e.date >= today);
+  }
+  else if (view === "proximos") evs = evs.filter(e => startOfDay(e.date) >= today);
+  if (freeOnly) evs = evs.filter(e => e.free);
+  if (venueFilter) evs = evs.filter(e => (e.venue||"").toLowerCase() === venueFilter);
+  if (query){
+    const q = query.toLowerCase();
+    evs = evs.filter(e => e.raw.toLowerCase().includes(q));
+  }
+  return evs;
+}
+
+function render(){
+  const evs = filtered();
+  const today = startOfDay(new Date()).getTime();
+  list.classList.remove("fade"); void list.offsetWidth; list.classList.add("fade");
+
+  if (!evs.length){
+    list.innerHTML = '<div class="empty"><strong>Nada por aquí</strong>Prueba otra vista o quita algún filtro.</div>';
+    return;
+  }
+  let html = "", curMonth = -1, curDay = null;
+  for (const e of evs){
+    const key = e.month + "-" + e.day;
+    if (e.month !== curMonth){
+      if (curDay) { html += "</div></div>"; curDay = null; }
+      curMonth = e.month;
+      html += `<div class="month-h">${MONTH_NAMES[e.month].toLowerCase()}</div>`;
+    }
+    if (key !== curDay){
+      if (curDay) html += "</div></div>";
+      curDay = key;
+      const isToday = startOfDay(e.date).getTime() === today;
+      html += `<div class="day${isToday?" today":""}">
+        <div class="stub"><span class="dow">${DOW[e.dow]||e.dow}</span><span class="num">${e.day}</span></div>
+        <div class="events">`;
+    }
+    html += `<div class="ev">
+      <div class="name">${esc(e.name)}${e.free?' <span class="tag-free">Gratis</span>':""}</div>
+      <div class="meta">
+        ${e.cycle?`<span class="cycle">${esc(e.cycle)}</span>`:""}
+        ${e.venue?`<span class="venue">${esc(e.venue)}</span>`:""}
+        ${e.time?`<span>${e.time}</span>`:""}
+        ${e.price && !e.free?`<span class="price">${esc(e.price)}</span>`:""}
+      </div>
+    </div>`;
+  }
+  if (curDay) html += "</div></div>";
+  list.innerHTML = html;
+}
+
+function esc(s){ return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function renderVenues(){
+  const counts = {};
+  for (const e of allEvents){ if (e.venue) counts[e.venue.toLowerCase()] = (counts[e.venue.toLowerCase()]||0)+1; }
+  const opts = Object.entries(counts).sort((a,b)=>b[1]-a[1])
+    .map(([v,n]) => `<option value="${esc(v)}">${esc(v)} (${n})</option>`).join("");
+  $("#selVenue").innerHTML = '<option value="">Todas las salas</option>' + opts;
+}
+
+function setStatus(){
+  const dot = $("#dot"), txt = $("#statusTxt");
+  dot.className = "dot " + (live ? "live" : "offline");
+  if (lastUpdate){
+    const mins = Math.round((Date.now()-lastUpdate)/60000);
+    txt.textContent = (live ? "Doc en vivo" : "Copia local") + " · " + (mins<1?"ahora":`hace ${mins} min`);
+  } else txt.textContent = live ? "Doc en vivo" : "Copia local";
+}
+
+/* ================= BOOT ================= */
+async function refresh(manual){
+  $("#statusTxt").textContent = "Actualizando…";
+  const evs = await fetchDoc();
+  if (evs){ allEvents = evs; live = true; }
+  else if (!allEvents.length){ allEvents = parseDoc(SNAPSHOT); live = false; }
+  else live = false;
+  lastUpdate = Date.now();
+  renderVenues(); render(); setStatus();
+}
+
+document.querySelectorAll(".chip[data-view]").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll(".chip[data-view]").forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true");
+    view = b.dataset.view; render();
+  });
+});
+$("#btnFree").addEventListener("click", e=>{
+  freeOnly = !freeOnly;
+  e.currentTarget.setAttribute("aria-pressed", String(freeOnly));
+  render();
+});
+$("#selVenue").addEventListener("change", e=>{ venueFilter = e.target.value; render(); });
+$("#inpSearch").addEventListener("input", e=>{ query = e.target.value.trim(); render(); });
+$("#btnRefresh").addEventListener("click", ()=>refresh(true));
+setInterval(setStatus, 60000);
+setInterval(()=>refresh(false), REFRESH_MS);
+
+/* ====== FALLBACK SNAPSHOT (auto-replaced by live fetch) ====== */
+const SNAPSHOT = `
+JULIO
+V03 immaculate fools (metropoli) 20:30 / entrada de dia 8€
+V03 herr manos (terraza alsedi, celorio) 22:00 / GRATIS
+V03 Festival de jazz de Bueño: cristopher perez quartet + lvdf (bueño) 21:00
+V03 anti (la caja de músicos) 21:00
+V03 taburete + vius (metropoli) 22:00 / entrada de dia 8€
+V03 clédar + jade4 (lucy) 20:30 / 10€
+S04 mota blues (la industria, sama) 20:00 / GRATIS
+S04 Siempre ilegales: los ruidos (carpa del encuentro, semana negra) 22:30 / GRATIS
+S04 eva hevia + naiara moore (metropoli) 20:30 / entrada de dia 8€
+S04 polima westcoast + lyanno + ovy on the drums (metropoli) 22:00 / entrada de dia 8€
+S04 Festival de jazz de Bueño: the 44 dealers + DJ's (herminio afonso / helios amor / colectivo blue hour) (bueño) 12:30
+S04 Festival de jazz de Bueño: the international classic jazz all stars + nicole zuraitis (bueño) 21:00
+D05 Festival de jazz de Bueño: juan sandman & hot club de asturias + monica acevedo sings piaf (bueño) 12:30
+D05 Xixón sound (carpa del encuentro, semana negra) 22:30 / GRATIS
+D05 tussiwarriors (metropoli) 20:30 / entrada de dia 8€
+D05 m-clan (metropoli) 22:00 / entrada de dia 8€
+D05 fre garcia (kuivi) 22:00 / GRATIS
+L06 lía & wave transfer band (carpa del encuentro, semana negra) 22:30 / GRATIS
+M07 igor paskual (carpa del encuentro, semana negra) 22:30 / GRATIS
+M07 pancho and lefty (kuivi) 22:00 / GRATIS
+X08 stems (gong) 20:30 / 19,80€
+X08 El savoy: javi y los paramétricos (carpa del encuentro, semana negra) 22:30 / GRATIS
+X08 Tiempos nuevos: repion + troya (antigua universidad Oviedo) 20:00
+J09 litus & pablo novoa (carpa del encuentro, semana negra) 22:30 / GRATIS
+J09 peter piek (kuivi) 22:00 / GRATIS
+V10 acid tongue (kuivi) 22:30 / GRATIS
+V10 jeff espinoza y ramón arroyo (carpa del encuentro, semana negra) 22:30 / GRATIS
+S11 La Terraza: maraya zydeco (botánico, Gijón) 22:00 / 19€
+S11 fantasma fantasía (la industria, Sama) 20:00 / GRATIS
+D12 makewar (kuivi) 22:00 / GRATIS
+D12 La Terraza: micromambo (botánico, Gijón) 22:00 / 19€
+L13 La Terraza: blues & decker (botánico, Gijón) 22:00 / 19€
+M14 La Terraza: inés de lis (botánico, Gijón) 22:00 / 19€
+X15 La Terraza: orquesta mendoza (botánico, Gijón) 22:00 / 19€
+X15 Tiempos nuevos: el bugg + lablackie (antigua universidad Oviedo) 20:00
+J16 La Terraza: los testigos (botánico, Gijón) 22:00 / 19€
+J16 esmeralda (kuivi) 22:00 GRATIS
+V17 La Terraza: tino di geraldo quintet (botánico, Gijón) 22:00 / 19€
+V17 grey giant (kuivi) 22:00 / GRATIS
+S18 La Terraza: plana mayor (botánico, Gijón) 22:00 / 19€
+D19 La Terraza: josele santiago (botánico, Gijón) 22:00 / 19€
+L20 la ronda mágica (kuivi) 22:00 / GRATIS
+X22 Tiempos nuevos: ezezez + los yolos (antigua universidad Oviedo) 20:00
+J23 ni-hao!!!! (kuivi) 22:00 GRATIS
+J23 Ye-yé: bingo bongos (paseo de begoña) 20:00 / GRATIS
+J23 Ye-yé: the killing floors + rendez-vous (acapulco) 21:30 / 20€
+V24 presa + ensaña (lucy) 20:00 / 10€
+V24 Ye-yé: green seagull (albeniz) 22:30 / 25€
+V24 Ye-yé: marta high & julian maeso band (plaza mayor)
+S25 roca pintada (kuivi) 22:00 / GRATIS
+S25 Kontrakorriente (teatro de roces)
+S25 Ye-yé: wau y los arrrghs plays the sonics (albeniz) 22:00 / 30€
+M28 rey don perro (kuivi) 22:00 / GRATIS
+X29 Tiempos nuevos: ganges + marzo (antigua universidad Oviedo) 20:00
+J30 federale (kuivi) 21:00 / GRATIS
+J30 Surf, music & friends: mota blues + los canotipos (playa salinas)
+V31 Surf, music & friends: v.velutina + weak (playa salinas)
+V31 la urss (kuivi) 22:00 / GRATIS
+AGOSTO
+S01 CFR fest: emilio jose + sofia + polifeme + cachito turulo + daga + giulio erasmus & reptilian expo + from (pozo san josé, turón) 15:00 / 15€
+S01 the peawees + radio days (kuivi) 22:00 / GRATIS
+S01 Surf, music & friends: sombra + wet cactus (playa salinas)
+D02 Surf, music & friends: miticos del chimborazo (playa salinas)
+L03 la ronda mágica (kuivi) 22:00 / GRATIS
+M04 vixil (kuivi) 22:00 / GRATIS
+X05 herr manos (kuivi) 22:00 / GRATIS
+X05 Tiempos nuevos: parkineos + gea (antigua universidad Oviedo) 20:00
+J06 evolfo (kuivi) 22:00 / GRATIS
+J06 the magnolias (bola 8) 20:30 / 12€ ant - 15€ taq
+J06 prestoso fest: axolotes mexicanos + lorena álvarez + fee reega + la rate timide + lucia dilema
+V07 bops (kuivi) 22:00 / GRATIS
+V07 prestoso fest: ortiga + el mató a un policia motorizado + nadadora + autocamper + basic partner + dj coco
+V07 ewan fest
+S08 ewan fest
+S08 prestoso fest: lady llagar + la güeriata (sesión vermú) / rufus t firefly + standstill + sprints + from + joselius + mediocre
+D08 pablo vila (kuivi) 22:00 / GRATIS
+L10 inoxidables (kuivi) 22:00 / GRATIS
+J13 carla lourdes (kuivi) 22:00 GRATIS
+V14 mess + taragañu (gong) 20:30 / 16,50€
+S15 the caries company (kuivi) 22:00 / GRATIS
+L17 la ronda mágica (kuivi) 22:00 / GRATIS
+M18 paxareto (kuivi) 22:00 / GRATIS
+J20 joder juan (kuivi) 22:00 / GRATIS
+S22 la antigua fe (kuivi) 22:00 / GRATIS
+J27 infección (kuivi) 22:00 / GRATIS
+L31 la ronda mágica 22:00 / GRATIS
+SEPTIEMBRE
+M01 basic partner (kuivi) 22:00 GRATIS
+D06 MECA: 2º alcuentro DJs asturianos (kuivi) 13:00 / De 14 a 20€ en tramos
+V11 an evening with bruce springsteen (gong) 20:30 / 15,40€
+S12 primo + phem pheas + refugio (último concierto) (la münster) 19:30 / 10€
+S12 El pueblo Rioseco
+D13 El pueblo Rioseco
+S19 diamond dogs (albeniz) 21:00 / 23€
+J24 the speedways (bola8)
+J24 my name is nobody (kuivi) 21:00 / GRATIS
+S26 los saxos del averno (gong) 20:30 / 16,50€
+D27 ricardo lezón (encaja2, teatro jovellanos) 20:00 / 6€
+M29 presa (encaja2, teatro jovellanos) 20:00 / 6€
+OCTUBRE
+J01 sam snitchy (kuivi) 21:00 / GRATIS
+J01 cloverhearts (gong) 20:30 / 19.80€
+V02 ocean colour scene (Albeniz) 20:00 / 45€
+V02 eightycuts + la mala dentro (kuivi) 21:00 GRATIS
+S03 gu vo + asma (lucy) 20:00 / 10€
+S03 salduie (gong) 20:30 / 18€
+J08 the screamin' cheetah wheelies (albéniz)
+J08 maddening flames (kuivi) 21:00 / GRATIS
+V09 maddening flames (cuévano, pola siero)
+V09 rat-zinger (gong) 20:30 / 16.50€
+S10 maddening flames (bola 8)
+S10 teenage fanclub (kuivi) 21:00 - 33€
+D11 caamaño & ameixeiras (encaja2, teatro jovellanos) 20:00 / 6€
+J15 el saguaro (kuivi) 21:00 / GRATIS
+S17 lorna (kuivi) 21:30 / 20€
+S17 porco bravo (sala telva) 20:00 / 13€ ant - 18€ taq
+S17 camellos (gong) 20:30 / 19,80€
+S24 mala gestión (gong) 20:30 / 17,60€
+J29 tickles (kuivi) 21:00 GRATIS
+V30 mohama saz (encaja2, teatro jovellanos) 20:00 / 6€
+S31 supersuckers (gong) 20:30 / 22€
+NOVIEMBRE
+J05 kelley stoltz (gong) 20:30 / 16,50€
+V06 elio toffana (gong) 20:30 / 18 a 20€ +GG (según tramo)
+S07 pantis + ciudad naranco (lucy) 20:00 / 10€
+S07 go catus (telva) 20:00 / 12€ ant - 15€ taq
+J12 mansions cellar (kuivi) 21:00 / GRATIS
+S14 cloud nothings (Gong) / 20:30 apertura / 18€
+S14 robert finley (kuivi) 21:00 -apertura- 25/30€
+S14 ramoncín (tribeca) 21:00 / 33€
+V27 the sadies + terra lightfoot (gong) 20:30 / 19,80€
+S28 raposu rock (tribeca) 21:00
+D29 l'aranná (encaja2, teatro jovellanos) 20:00 / 6€
+DICIEMBRE
+M01 vincent bestaven (encaja2, teatro jovellanos) 20:00 / 6€
+J03 fragile (kuivi) 21:00 / GRATIS
+V04 little barrie (gong) 21:00 / 19.50€
+V04 you put the load right on me : 50 aniversario (kuivi) 21:30 16,50€
+S05 depedro (teatro laboral)
+S05 modelo de respuesta polar (tribeca) 21:00
+D06 eliades ochoa (laboral) 20:30 / 40.50€
+S12 triángulo de amor bizarro (kuivi) 21:30/ 22€
+S19 belako (gong) 20:30 / 20€
+S26 dixebra (tribeca) 21:00
+`;
+
+refresh(false);
+</script>
+</body>
+</html>
