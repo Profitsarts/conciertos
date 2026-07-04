@@ -243,7 +243,10 @@ function htmlToText(html){
 async function fetchDoc(){
   for (const proxy of PROXIES){
     try{
-      const res = await fetch(proxy(DOC_URL), {cache:"no-store"});
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort(), 6000);
+      const res = await fetch(proxy(DOC_URL), {cache:"no-store", signal:ctrl.signal});
+      clearTimeout(t);
       if (!res.ok) continue;
       const html = await res.text();
       const text = htmlToText(html);
@@ -534,6 +537,8 @@ S19 belako (gong) 20:30 / 20€
 S26 dixebra (tribeca) 21:00
 `;
 
+allEvents = parseDoc(SNAPSHOT);
+renderVenues(); render(); setStatus();
 refresh(false);
 </script>
 </body>
