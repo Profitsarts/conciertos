@@ -146,7 +146,7 @@
 
 <script>
 /* ================= CONFIG ================= */
-const DOC_URL = "https://docs.google.com/document/u/0/d/1EAe-TBDskDMQcGsqYwkKPSd0_q780HxA1zDJBkoz65c/mobilebasic";
+const DOC_URL = "https://docs.google.com/document/d/1EAe-TBDskDMQcGsqYwkKPSd0_q780HxA1zDJBkoz65c/export?format=txt";
 const PROXIES = [
   u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
   u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
@@ -229,16 +229,8 @@ function parseDoc(text){
 }
 
 /* ============ FETCH (live doc) ============ */
-function htmlToText(html){
-  const cleaned = html
-    .replace(/<style[\s\S]*?<\/style>/gi,"")
-    .replace(/<script[\s\S]*?<\/script>/gi,"")
-    .replace(/<\/(p|div|h\d|li|tr)>/gi,"\n")
-    .replace(/<br[^>]*>/gi,"\n")
-    .replace(/<[^>]+>/g,"");
-  const ta = document.createElement("textarea");
-  ta.innerHTML = cleaned;
-  return ta.value.replace(/[ ​-‍﻿]/g," ");
+function sanitize(text){
+  return text.replace(/[ ​-‍﻿]/g," ");
 }
 
 async function fetchDoc(){
@@ -249,8 +241,7 @@ async function fetchDoc(){
       const res = await fetch(proxy(DOC_URL), {cache:"no-store", signal:ctrl.signal});
       clearTimeout(t);
       if (!res.ok) continue;
-      const html = await res.text();
-      const text = htmlToText(html);
+      const text = sanitize(await res.text());
       const evs = parseDoc(text);
       if (evs.length > 5) return evs; // sanity check
     }catch(e){ /* try next proxy */ }
