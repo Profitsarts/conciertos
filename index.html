@@ -237,7 +237,7 @@ function htmlToText(html){
     .replace(/<[^>]+>/g,"");
   const ta = document.createElement("textarea");
   ta.innerHTML = cleaned;
-  return ta.value;
+  return ta.value.replace(/[ ​-‍﻿]/g," ");
 }
 
 async function fetchDoc(){
