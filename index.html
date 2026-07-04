@@ -363,7 +363,7 @@ function setStatus(){
 async function refresh(manual){
   $("#statusTxt").textContent = "Actualizando…";
   const evs = await fetchDoc();
-  if (evs){ allEvents = evs; live = true; }
+  if (evs && evs.length >= allEvents.length){ allEvents = evs; live = true; }
   else if (!allEvents.length){ allEvents = parseDoc(SNAPSHOT); live = false; }
   else live = false;
   lastUpdate = Date.now();
