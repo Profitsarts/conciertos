@@ -32,8 +32,9 @@
   header{
     position:sticky;top:0;z-index:20;
     background:linear-gradient(var(--ink) 82%, rgba(16,18,67,0));
-    padding:calc(env(safe-area-inset-top) + 14px) 16px 12px;
+    padding:calc(env(safe-area-inset-top) + 0.875rem) 1rem 0.75rem;
   }
+  .header-wrap{max-width:45rem;margin:0 auto}
   .masthead{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .brand{display:flex;align-items:center;gap:8px}
   .brand svg{width:4em;height:4em;flex:none}
@@ -124,6 +125,7 @@
 </head>
 <body>
 <header>
+ <div class="header-wrap">
   <div class="masthead">
     <div class="brand">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 382 300" aria-hidden="true">
@@ -149,6 +151,7 @@
     <select id="selVenue" aria-label="Filtrar por sala"><option value="">Todas las salas</option></select>
     <input type="search" id="inpSearch" placeholder="Buscar grupo, sala, festival…" aria-label="Buscar">
   </div>
+ </div>
 </header>
 <main id="list" class="fade"></main>
 
